@@ -1,8 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
 
     const video = document.getElementById('inputVideo')
-    const btn = document.getElementById('btn')
-    console.log(btn)
+    const form = document.querySelector("#form-login")
 
     let referenceImageDescriptor;
 
@@ -25,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const referenceImage = await faceapi.fetchImage('./img/face.jpg'); // Acá conectaremos la base de datos
 
         const singleResult = await faceapi.detectSingleFace(referenceImage).withFaceLandmarks().withFaceDescriptor();
-
+        console.log(singleResult)
         if (singleResult) {
             referenceImageDescriptor = singleResult.descriptor;
         } else {

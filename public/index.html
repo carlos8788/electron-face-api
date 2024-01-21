@@ -6,31 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="./js/face-api.min.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    <link rel="stylesheet" href="css/style.css">
 
-        video {
-            position: absolute;
-            z-index: 1;
-        }
-
-        canvas {
-            position: relative;
-            z-index: 20;
-        }
-    </style>
 </head>
 
 <body>
-    <h1 id="status">Hola Mundo</h1>
-    <div style="position: relative;" >
-        <video  id="inputVideo" autoplay muted playsinline></video>
-        <button id="btn">cargar</button>
-    </div>
+    <form class="form-login">
+        <div class="form-video">
+            <input type="text" name="face" value="" hidden>
+            <video id="inputVideo" autoplay muted playsinline ></video>
+        </div>
+        <div>
+            <input class="form-input" type="text" placeholder="username" name="username" id="username">
+        </div>
+        <div>
+            <input class="form-input" type="password" placeholder="password" name="password" id="password">
+        </div>
+        <div>
+            <button type="submit" class="form-button">Enviar</button>
+        </div>
+    </form>
+    
 
     <script src="./js/script_webcam.js"></script>
 </body>
