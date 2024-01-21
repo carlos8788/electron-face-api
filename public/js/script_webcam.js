@@ -1,45 +1,68 @@
-const video = document.getElementById('inputVideo');
-const canvas = document.getElementById('overlay');
+document.addEventListener("DOMContentLoaded", function () {
 
-(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-    video.srcObject = stream;
-})();
+    const video = document.getElementById('inputVideo')
+    const btn = document.getElementById('btn')
+    console.log(btn)
 
-async function onPlay() {
-    const MODEL_URL = './models';
+    let referenceImageDescriptor;
 
-    await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
-    await faceapi.loadFaceLandmarkModel(MODEL_URL)
-    await faceapi.loadFaceRecognitionModel(MODEL_URL)
-    await faceapi.loadFaceExpressionModel(MODEL_URL)
-    if (video.paused || video.ended) return setTimeout(() => onPlay());
-    let fullFaceDescriptions = await faceapi.detectAllFaces(video)
-        .withFaceLandmarks()
-        .withFaceDescriptors()
-        .withFaceExpressions();
-    if (fullFaceDescriptions.length > 0) {
-        // Asumiendo que solo hay una cara y se toma la primera detección
-        const expressions = fullFaceDescriptions[0].expressions;
-        const maxValue = Math.max(...Object.values(expressions));
-        const emotion = Object.keys(expressions).filter(
-            item => expressions[item] === maxValue
-        )[0];
+    async function loadModels() {
+        const MODEL_URL = './models';
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
 
-        // Si la expresión con mayor valor es una sonrisa, escribe "OK" en algún lugar
-        if (emotion === 'happy' && maxValue > 0.5) { // Umbral de 0.5, ajustar según sea necesario
-            document.getElementById('status').innerText = 'Feliz';
+    }
+
+    async function startVideo() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        video.srcObject = stream;
+    }
+
+    async function loadReferenceImage() {
+
+        const referenceImage = await faceapi.fetchImage('./img/face.jpg'); // Acá conectaremos la base de datos
+
+        const singleResult = await faceapi.detectSingleFace(referenceImage).withFaceLandmarks().withFaceDescriptor();
+
+        if (singleResult) {
+            referenceImageDescriptor = singleResult.descriptor;
         } else {
-            document.getElementById('status').innerText = 'No feliz';
+            console.error('No se pudo obtener los descriptores de la imagen de referencia');
         }
     }
-    // const dims = faceapi.matchDimensions(canvas, video, true);
-    // const resizedResults = faceapi.resizeResults(fullFaceDescriptions, dims);
 
-    // faceapi.draw.drawDetections(canvas, resizedResults);
-    // faceapi.draw.drawFaceLandmarks(canvas, resizedResults);
-    // faceapi.draw.drawFaceExpressions(canvas, resizedResults, 0.05);
+    async function onPlay() {
+        if (video.paused || video.ended || !referenceImageDescriptor) return setTimeout(() => onPlay());
+        const minConfidence = 0.5
+        const maxDescriptorDistance = 0.6;
+        const thresholdForAcceptableMatch = 0.5;
+        const options = new faceapi.SsdMobilenetv1Options({ minConfidence });
+        const results = await faceapi.detectAllFaces(video, options)
+            .withFaceLandmarks()
+            .withFaceDescriptors();
 
-    requestAnimationFrame(onPlay)
-}
+        if (results.length > 0) {
+            const faceMatcher = new faceapi.FaceMatcher(referenceImageDescriptor, maxDescriptorDistance);
+            const bestMatch = faceMatcher.findBestMatch(results[0].descriptor);
 
+            if (bestMatch.distance < thresholdForAcceptableMatch) {
+                document.getElementById('status').innerText = '¡Coincidencia encontrada!';
+            } else {
+                document.getElementById('status').innerText = 'Sin coincidencias';
+            }
+        }
+
+        setTimeout(() => onPlay());
+    }
+
+
+
+    loadModels().then(async () => {
+        console.log("Todos los modelos están cargados y listos para usar.");
+        loadReferenceImage();
+        await startVideo();
+        await onPlay();
+    });
+})
