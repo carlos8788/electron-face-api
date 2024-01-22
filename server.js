@@ -24,6 +24,7 @@ function createWindow() {
             contextIsolation: true, // Mantén activada la aislación de contexto
             // nodeIntegration: false, // No es necesario si contextIsolation está activado
         }
+
     });
 
 
@@ -33,7 +34,7 @@ function createWindow() {
     // } else {
     //     // Cargar desde el servidor de desarrollo de Vite.
     //     mainWindow.loadURL('http://localhost:5173');
-    //     mainWindow.webContents.openDevTools('detach');
+    mainWindow.webContents.openDevTools('detach');
     // }
 
     // Emitido cuando la ventana es cerrada.
